@@ -1,0 +1,615 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#tp{position:relative;background:#0000aa;font-family:'Courier New','Lucida Console',monospace;font-size:14px;color:#ffffff;display:flex;flex-direction:column;height:680px;overflow:hidden;line-height:1.25}
+#menubar{background:#aaaaaa;color:#000;display:flex;align-items:center;padding:0 6px;height:20px;flex-shrink:0;font-size:13px;gap:0}
+.menu-item{padding:0 8px;cursor:pointer;user-select:none;position:relative}
+.menu-item:hover,.menu-item.open{background:#00aaaa;color:#000}
+.menu-item u{text-decoration:underline}
+.menu-equals{padding:0 6px;color:#fff;background:#aaaaaa}
+.menu-dropdown{display:none;position:absolute;top:20px;left:0;background:#aaaaaa;color:#000;border:1px solid #fff;min-width:180px;z-index:50;padding:2px 0}
+.menu-item.open .menu-dropdown{display:block}
+.menu-dropdown div{padding:1px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:16px;white-space:nowrap}
+.menu-dropdown div:hover{background:#00aaaa}
+.menu-dropdown div.disabled{color:#666;cursor:default}
+.menu-dropdown div.disabled:hover{background:#aaaaaa}
+.menu-sep{border-top:1px solid #666;margin:2px 0;padding:0!important;cursor:default!important;height:1px}
+.menu-sep:hover{background:#aaaaaa!important}
+.shortcut{color:#a00}
+.menu-dropdown div:hover .shortcut{color:#fff}
+
+#workspace{flex:1;display:flex;flex-direction:column;min-height:0;padding:1px;background:#aaaaaa}
+.window{flex:1;background:#0000aa;display:flex;flex-direction:column;min-height:0;border:1px solid #fff;position:relative}
+.window-title{background:#aaaaaa;color:#000;text-align:center;font-size:13px;padding:0 4px;height:18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid #fff}
+.window-title .corner{color:#000;background:#aaaaaa;padding:0 4px}
+.window-title .corner:hover{background:#00aaaa;cursor:pointer}
+.window-title .titletext{flex:1;text-align:center;color:#000}
+.window-title .titletext .num{color:#a00;font-weight:bold}
+
+.editor-area{flex:1;display:flex;min-height:0;overflow:hidden}
+.gutter{background:#0000aa;color:#aaaaaa;text-align:right;font-size:14px;user-select:none;border-right:1px solid #555;flex-shrink:0;overflow:hidden;line-height:1.25;width:48px;font-family:'Courier New',monospace;padding-top:4px}
+.gutter-line{padding:0 6px 0 4px;height:17.5px;line-height:1.25;white-space:nowrap}
+.editor-scroll{flex:1;overflow:auto;position:relative;background:#0000aa}
+.editor-wrap{position:relative;min-height:100%}
+#editor-input{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;color:transparent;caret-color:#fff;border:none;outline:none;resize:none;font-family:'Courier New','Lucida Console',monospace;font-size:14px;line-height:1.25;padding:4px 0 4px 8px;white-space:pre;overflow:hidden;z-index:2;tab-size:2;letter-spacing:0;margin:0}
+#editor-highlight{padding:4px 0 4px 8px;font-family:'Courier New','Lucida Console',monospace;font-size:14px;line-height:1.25;white-space:pre;color:#ffff55;pointer-events:none;z-index:1;letter-spacing:0;margin:0;min-height:100%}
+.kw{color:#ffffff;font-weight:bold}
+.str{color:#00ffff}
+.num{color:#ff55ff}
+.cmt{color:#aaaaaa;font-style:italic}
+.op{color:#55ff55}
+
+#statusline{background:#aaaaaa;color:#000;font-size:13px;padding:0 6px;height:18px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.sl-key{color:#000}
+.sl-key b{color:#a00}
+.sl-pos{margin-left:auto;color:#000}
+
+#output-window{display:none;background:#000;color:#aaaaaa;font-family:'Courier New',monospace;font-size:14px;padding:8px;height:160px;overflow-y:auto;border-top:2px solid #fff;flex-shrink:0;white-space:pre-wrap;line-height:1.3}
+#output-window.show{display:block}
+.out-prompt{color:#fff}
+.out-err{color:#ff5555}
+.out-ok{color:#55ff55}
+.out-info{color:#ffff55}
+
+#modal-overlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center}
+#modal-overlay.show{display:flex}
+.modal{background:#aaaaaa;color:#000;border:1px solid #fff;min-width:380px;max-width:90%;display:flex;flex-direction:column;font-size:13px}
+.modal-title{background:#00aaaa;color:#000;padding:1px 8px;text-align:center;border-bottom:1px solid #fff}
+.modal-body{padding:12px 16px;line-height:1.6}
+.modal-body input{background:#000080;color:#ffff55;border:1px solid #000;padding:2px 4px;font-family:'Courier New',monospace;font-size:13px;width:100%;outline:none}
+.modal-body input:focus{border-color:#fff}
+.modal-footer{padding:8px 16px 12px;display:flex;gap:8px;justify-content:center}
+.mbtn{background:#aaaaaa;color:#000;border:1px solid #000;padding:2px 14px;cursor:pointer;font-family:'Courier New',monospace;font-size:13px;box-shadow:1px 1px 0 #000;min-width:60px}
+.mbtn:hover{background:#00aaaa}
+.mbtn:active{box-shadow:none;transform:translate(1px,1px)}
+.mbtn .acc{color:#a00;font-weight:bold;text-decoration:underline}
+
+.example-list{background:#000080;color:#ffff55;padding:8px;font-family:'Courier New',monospace;max-height:200px;overflow-y:auto;margin-top:6px}
+.example-list div{padding:2px 6px;cursor:pointer}
+.example-list div:hover{background:#00aaaa;color:#000}
+</style>
+
+<div id="tp">
+  <div id="menubar">
+    <span class="menu-equals">≡</span>
+    <span class="menu-item" data-menu="file"><u>F</u>ile
+      <div class="menu-dropdown">
+        <div onclick="newFile()">New<span class="shortcut"></span></div>
+        <div onclick="showOpen()">Open...<span class="shortcut">F3</span></div>
+        <div onclick="saveFile()">Save<span class="shortcut">F2</span></div>
+        <div class="menu-sep"></div>
+        <div onclick="quitIDE()">Exit<span class="shortcut">Alt-X</span></div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="edit"><u>E</u>dit
+      <div class="menu-dropdown">
+        <div onclick="editAction('undo')">Undo<span class="shortcut">Alt-BkSp</span></div>
+        <div class="menu-sep"></div>
+        <div onclick="editAction('cut')">Cut<span class="shortcut">Shift-Del</span></div>
+        <div onclick="editAction('copy')">Copy<span class="shortcut">Ctrl-Ins</span></div>
+        <div onclick="editAction('paste')">Paste<span class="shortcut">Shift-Ins</span></div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="search"><u>S</u>earch
+      <div class="menu-dropdown">
+        <div onclick="showFind()">Find...<span class="shortcut">Ctrl-QF</span></div>
+        <div onclick="showReplace()">Replace...<span class="shortcut">Ctrl-QA</span></div>
+        <div onclick="showGoto()">Go to line...<span class="shortcut">Ctrl-JL</span></div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="run"><u>R</u>un
+      <div class="menu-dropdown">
+        <div onclick="runProgram()">Run<span class="shortcut">Ctrl-F9</span></div>
+        <div onclick="stepOver()">Step over<span class="shortcut">F8</span></div>
+        <div onclick="traceInto()">Trace into<span class="shortcut">F7</span></div>
+        <div class="menu-sep"></div>
+        <div onclick="programReset()">Program reset<span class="shortcut">Ctrl-F2</span></div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="compile"><u>C</u>ompile
+      <div class="menu-dropdown">
+        <div onclick="compileProgram()">Compile<span class="shortcut">Alt-F9</span></div>
+        <div onclick="makeProgram()">Make<span class="shortcut">F9</span></div>
+        <div onclick="buildProgram()">Build</div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="debug"><u>D</u>ebug
+      <div class="menu-dropdown">
+        <div onclick="showOutput()">Output</div>
+        <div onclick="toggleBreakpoint()">Toggle breakpoint<span class="shortcut">Ctrl-F8</span></div>
+        <div class="disabled">Watches</div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="options"><u>O</u>ptions
+      <div class="menu-dropdown">
+        <div class="disabled">Compiler...</div>
+        <div class="disabled">Memory sizes...</div>
+        <div class="disabled">Linker...</div>
+        <div class="disabled">Directories...</div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="window"><u>W</u>indow
+      <div class="menu-dropdown">
+        <div onclick="showOutput()">Output<span class="shortcut">Alt-3</span></div>
+        <div onclick="closeOutput()">Close output</div>
+      </div>
+    </span>
+    <span class="menu-item" data-menu="help"><u>H</u>elp
+      <div class="menu-dropdown">
+        <div onclick="showAbout()">About...</div>
+        <div onclick="showHelp()">Help on Pascal<span class="shortcut">F1</span></div>
+      </div>
+    </span>
+  </div>
+
+  <div id="workspace">
+    <div class="window" id="main-window">
+      <div class="window-title">
+        <span class="corner" onclick="newFile()">[■]</span>
+        <span class="titletext"><span class="num">1</span> NONAME00.PAS</span>
+        <span class="corner">[↕]</span>
+      </div>
+      <div class="editor-area">
+        <div class="gutter" id="gutter"></div>
+        <div class="editor-scroll" id="editor-scroll">
+          <div class="editor-wrap" id="editor-wrap">
+            <pre id="editor-highlight"></pre>
+            <textarea id="editor-input" spellcheck="false" autocomplete="off" wrap="off"></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="output-window"></div>
+    </div>
+  </div>
+
+  <div id="statusline">
+    <span class="sl-key"><b>F1</b> Help</span>
+    <span class="sl-key"><b>F2</b> Save</span>
+    <span class="sl-key"><b>F3</b> Open</span>
+    <span class="sl-key"><b>Alt-F9</b> Compile</span>
+    <span class="sl-key"><b>F9</b> Make</span>
+    <span class="sl-key"><b>Ctrl-F9</b> Run</span>
+    <span class="sl-pos" id="cursor-pos">1:1</span>
+  </div>
+
+  <div id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal-title" id="modal-title">Dialog</div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEYWORDS = ['program','uses','var','const','type','begin','end','procedure','function','if','then','else','while','do','for','to','downto','repeat','until','case','of','array','record','string','integer','real','boolean','char','byte','word','longint','true','false','nil','and','or','not','xor','div','mod','in','with','goto','label','exit','break','continue','unit','interface','implementation','writeln','write','readln','read','length','copy','pos','chr','ord','inc','dec','abs','sqr','sqrt','sin','cos','random','randomize','crt','clrscr','gotoxy','textcolor','textbackground'];
+
+const EXAMPLES = {
+  'HELLO.PAS': `program Hello;
+begin
+  writeln('Hello, World!');
+  writeln('Welcome to Turbo Pascal 7.0');
+  readln;
+end.`,
+  'FACT.PAS': `program Factorial;
+var
+  n, i: integer;
+  fact: longint;
+begin
+  write('Enter a number: ');
+  readln(n);
+  fact := 1;
+  for i := 1 to n do
+    fact := fact * i;
+  writeln(n, '! = ', fact);
+  readln;
+end.`,
+  'FIB.PAS': `program Fibonacci;
+var
+  i, n, a, b, t: integer;
+begin
+  write('How many terms? ');
+  readln(n);
+  a := 0; b := 1;
+  for i := 1 to n do
+  begin
+    write(a, ' ');
+    t := a + b;
+    a := b;
+    b := t;
+  end;
+  writeln;
+  readln;
+end.`,
+  'PRIMES.PAS': `program Primes;
+var
+  n, i, j: integer;
+  prime: boolean;
+begin
+  write('Find primes up to: ');
+  readln(n);
+  for i := 2 to n do
+  begin
+    prime := true;
+    for j := 2 to i div 2 do
+      if i mod j = 0 then prime := false;
+    if prime then write(i, ' ');
+  end;
+  writeln;
+  readln;
+end.`,
+  'GUESS.PAS': `program GuessNumber;
+var
+  secret, guess, tries: integer;
+begin
+  randomize;
+  secret := random(100) + 1;
+  tries := 0;
+  writeln('Guess a number from 1 to 100');
+  repeat
+    write('Your guess: ');
+    readln(guess);
+    tries := tries + 1;
+    if guess < secret then writeln('Too low!')
+    else if guess > secret then writeln('Too high!')
+    else writeln('Correct! Tries: ', tries);
+  until guess = secret;
+  readln;
+end.`,
+};
+
+const INITIAL_CODE = EXAMPLES['HELLO.PAS'];
+
+const editor = document.getElementById('editor-input');
+const highlight = document.getElementById('editor-highlight');
+const gutter = document.getElementById('gutter');
+const editorScroll = document.getElementById('editor-scroll');
+const cursorPos = document.getElementById('cursor-pos');
+const outputWindow = document.getElementById('output-window');
+
+editor.value = INITIAL_CODE;
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlightPascal(code) {
+  const lines = code.split('\n');
+  return lines.map(line => {
+    if (!line) return ' ';
+    let result = '';
+    let i = 0;
+    while (i < line.length) {
+      const ch = line[i];
+      if (ch === '{') {
+        const end = line.indexOf('}', i);
+        const stop = end === -1 ? line.length : end + 1;
+        result += '<span class="cmt">' + escapeHtml(line.slice(i, stop)) + '</span>';
+        i = stop;
+      } else if (ch === '(' && line[i+1] === '*') {
+        const end = line.indexOf('*)', i+2);
+        const stop = end === -1 ? line.length : end + 2;
+        result += '<span class="cmt">' + escapeHtml(line.slice(i, stop)) + '</span>';
+        i = stop;
+      } else if (ch === '/' && line[i+1] === '/') {
+        result += '<span class="cmt">' + escapeHtml(line.slice(i)) + '</span>';
+        i = line.length;
+      } else if (ch === "'") {
+        let j = i + 1;
+        while (j < line.length && line[j] !== "'") j++;
+        const stop = j < line.length ? j + 1 : line.length;
+        result += '<span class="str">' + escapeHtml(line.slice(i, stop)) + '</span>';
+        i = stop;
+      } else if (/[a-zA-Z_]/.test(ch)) {
+        let j = i;
+        while (j < line.length && /[a-zA-Z0-9_]/.test(line[j])) j++;
+        const word = line.slice(i, j);
+        if (KEYWORDS.includes(word.toLowerCase())) {
+          result += '<span class="kw">' + escapeHtml(word) + '</span>';
+        } else {
+          result += escapeHtml(word);
+        }
+        i = j;
+      } else if (/[0-9]/.test(ch)) {
+        let j = i;
+        while (j < line.length && /[0-9.]/.test(line[j])) j++;
+        result += '<span class="num">' + escapeHtml(line.slice(i, j)) + '</span>';
+        i = j;
+      } else if (/[+\-*\/=<>:;,.()[\]]/.test(ch)) {
+        result += '<span class="op">' + escapeHtml(ch) + '</span>';
+        i++;
+      } else {
+        result += escapeHtml(ch);
+        i++;
+      }
+    }
+    return result;
+  }).join('\n');
+}
+
+function renderGutter() {
+  const count = editor.value.split('\n').length;
+  let html = '';
+  for (let i = 1; i <= count; i++) {
+    html += '<div class="gutter-line">' + i + '</div>';
+  }
+  gutter.innerHTML = html;
+}
+
+function syncSizes() {
+  const lineHeight = 17.5;
+  const lineCount = editor.value.split('\n').length;
+  const minHeight = editorScroll.clientHeight;
+  const contentHeight = Math.max(minHeight, lineCount * lineHeight + 8);
+  editor.style.height = contentHeight + 'px';
+  highlight.style.height = contentHeight + 'px';
+  document.getElementById('editor-wrap').style.height = contentHeight + 'px';
+}
+
+function updateAll() {
+  highlight.innerHTML = highlightPascal(editor.value) + '\n';
+  renderGutter();
+  syncSizes();
+  updateCursorPos();
+}
+
+function updateCursorPos() {
+  const pos = editor.selectionStart;
+  const before = editor.value.slice(0, pos);
+  const lines = before.split('\n');
+  const line = lines.length;
+  const col = lines[lines.length - 1].length + 1;
+  cursorPos.textContent = line + ':' + col;
+}
+
+editor.addEventListener('input', updateAll);
+editor.addEventListener('keyup', updateCursorPos);
+editor.addEventListener('click', updateCursorPos);
+
+editorScroll.addEventListener('scroll', () => {
+  gutter.scrollTop = editorScroll.scrollTop;
+});
+
+editor.addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    editor.value = editor.value.slice(0, start) + '  ' + editor.value.slice(end);
+    editor.selectionStart = editor.selectionEnd = start + 2;
+    updateAll();
+  }
+});
+
+document.querySelectorAll('.menu-item').forEach(item => {
+  item.addEventListener('click', e => {
+    if (e.target.closest('.menu-dropdown')) return;
+    e.stopPropagation();
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.menu-item')) {
+    document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('open'));
+  }
+});
+
+function showModal(title, bodyHTML, footerHTML) {
+  document.getElementById('modal-title').textContent = ' ' + title + ' ';
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-footer').innerHTML = footerHTML || '<button class="mbtn" onclick="closeModal()"><span class="acc">O</span>K</button>';
+  document.getElementById('modal-overlay').className = 'show';
+}
+function closeModal() {
+  document.getElementById('modal-overlay').className = '';
+  editor.focus();
+}
+
+function newFile() {
+  editor.value = 'program NoName;\n\nbegin\n\nend.';
+  updateAll();
+  editor.focus();
+  editor.setSelectionRange(20, 20);
+  closeModal();
+}
+
+function showOpen() {
+  const list = Object.keys(EXAMPLES).map(name =>
+    `<div onclick="openExample('${name}')">${name}</div>`
+  ).join('');
+  showModal('Open File', `<div style="margin-bottom:6px">Select a file:</div><div class="example-list">${list}</div>`,
+    '<button class="mbtn" onclick="closeModal()"><span class="acc">C</span>ancel</button>');
+}
+
+function openExample(name) {
+  editor.value = EXAMPLES[name];
+  updateAll();
+  closeModal();
+  document.querySelector('.titletext').innerHTML = '<span class="num">1</span> ' + name;
+}
+
+function saveFile() {
+  showModal('Information', '<div style="text-align:center">File saved successfully.</div>');
+}
+
+function showFind() {
+  showModal('Find', `<div>Text to find:</div><input id="find-text" />`,
+    `<button class="mbtn" onclick="doFind()"><span class="acc">O</span>K</button><button class="mbtn" onclick="closeModal()"><span class="acc">C</span>ancel</button>`);
+  setTimeout(() => document.getElementById('find-text').focus(), 50);
+}
+function doFind() {
+  const text = document.getElementById('find-text').value;
+  if (!text) { closeModal(); return; }
+  const idx = editor.value.indexOf(text);
+  if (idx >= 0) { editor.focus(); editor.setSelectionRange(idx, idx + text.length); closeModal(); }
+  else { showModal('Information', '<div style="text-align:center">Search string not found.</div>'); }
+}
+
+function showReplace() {
+  showModal('Replace', `<div>Find:</div><input id="rep-find" /><div style="margin-top:8px">Replace with:</div><input id="rep-with" />`,
+    `<button class="mbtn" onclick="doReplace()"><span class="acc">O</span>K</button><button class="mbtn" onclick="closeModal()"><span class="acc">C</span>ancel</button>`);
+  setTimeout(() => document.getElementById('rep-find').focus(), 50);
+}
+function doReplace() {
+  const f = document.getElementById('rep-find').value;
+  const r = document.getElementById('rep-with').value;
+  if (f) editor.value = editor.value.split(f).join(r);
+  updateAll(); closeModal();
+}
+
+function showGoto() {
+  showModal('Go to line', '<div>Line number:</div><input id="goto-line" type="number" value="1" />',
+    `<button class="mbtn" onclick="doGoto()"><span class="acc">O</span>K</button><button class="mbtn" onclick="closeModal()"><span class="acc">C</span>ancel</button>`);
+  setTimeout(() => document.getElementById('goto-line').focus(), 50);
+}
+function doGoto() {
+  const n = parseInt(document.getElementById('goto-line').value) || 1;
+  const lines = editor.value.split('\n');
+  let pos = 0;
+  for (let i = 0; i < Math.min(n - 1, lines.length); i++) pos += lines[i].length + 1;
+  editor.focus(); editor.setSelectionRange(pos, pos); closeModal();
+}
+
+function editAction(a) {
+  if (a === 'cut') document.execCommand('cut');
+  else if (a === 'copy') document.execCommand('copy');
+  else if (a === 'paste') { document.execCommand('paste'); updateAll(); }
+  else if (a === 'undo') { document.execCommand('undo'); updateAll(); }
+}
+
+function showOutput() { outputWindow.classList.add('show'); }
+function closeOutput() { outputWindow.classList.remove('show'); }
+
+function appendOutput(html) {
+  outputWindow.innerHTML += html;
+  outputWindow.scrollTop = outputWindow.scrollHeight;
+}
+
+function compileProgram() {
+  closeOutput(); showOutput();
+  outputWindow.innerHTML = '';
+  appendOutput('<div class="out-info">Turbo Pascal Compiler  Version 7.0</div>');
+  appendOutput('<div>Compiling NONAME00.PAS...</div>');
+  const code = editor.value;
+  const errs = quickCheck(code);
+  setTimeout(() => {
+    if (errs.length === 0) {
+      const lines = code.split('\n').length;
+      appendOutput(`<div class="out-ok">  ${lines} lines compiled.  ${(lines*47).toLocaleString()} bytes code, 16384 bytes data.</div>`);
+      appendOutput('<div class="out-ok">Compile successful: Press any key</div>');
+    } else {
+      errs.forEach(e => appendOutput(`<div class="out-err">Error ${e.code}: ${e.msg} (line ${e.line})</div>`));
+      appendOutput('<div class="out-err">Compilation failed.</div>');
+    }
+  }, 400);
+}
+
+function makeProgram() { compileProgram(); }
+function buildProgram() { compileProgram(); }
+
+function quickCheck(code) {
+  const errs = [];
+  const lc = code.toLowerCase();
+  const lines = code.split('\n');
+  if (!lc.includes('begin')) errs.push({code:113, msg:"BEGIN expected", line:1});
+  if (!lc.trim().endsWith('end.') && !lc.includes('end.')) errs.push({code:10, msg:"Unexpected end of file", line:lines.length});
+  const beg = (lc.match(/\bbegin\b/g)||[]).length;
+  const en = (lc.match(/\bend\b/g)||[]).length;
+  if (beg > en) errs.push({code:113, msg:"END expected", line:lines.length});
+  return errs;
+}
+
+function runProgram() {
+  closeOutput(); showOutput();
+  outputWindow.innerHTML = '';
+  const errs = quickCheck(editor.value);
+  if (errs.length > 0) {
+    errs.forEach(e => appendOutput(`<div class="out-err">Error ${e.code}: ${e.msg} (line ${e.line})</div>`));
+    return;
+  }
+  setTimeout(() => simulateRun(editor.value), 300);
+}
+
+function simulateRun(code) {
+  let output = '';
+  const lines = code.split('\n');
+  let needsInput = false;
+  for (const line of lines) {
+    const t = line.trim();
+    let m;
+    if ((m = t.match(/^writeln\s*\(\s*'([^']*)'\s*\)/i))) output += m[1] + '\n';
+    else if ((m = t.match(/^writeln\s*\(\s*([^)]+)\)/i))) output += evalExpr(m[1]) + '\n';
+    else if ((m = t.match(/^writeln\s*;?$/i))) output += '\n';
+    else if ((m = t.match(/^write\s*\(\s*'([^']*)'\s*\)/i))) output += m[1];
+    else if ((m = t.match(/^write\s*\(\s*([^)]+)\)/i))) output += evalExpr(m[1]);
+    else if (/^readln/i.test(t)) needsInput = true;
+  }
+  if (output) appendOutput(escapeHtml(output));
+  if (needsInput) {
+    appendOutput('<div class="out-prompt">█</div>');
+    appendOutput('<div class="out-info" style="margin-top:8px">[Program interactive — readln pauses for input in real DOS]</div>');
+  }
+  appendOutput('<div class="out-info" style="margin-top:8px">--- Press any key to return to IDE ---</div>');
+}
+
+function evalExpr(expr) {
+  return expr.replace(/'/g,'').replace(/,/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function stepOver() { showModal('Debug', '<div style="text-align:center">Step over: line ' + cursorPos.textContent + '</div>'); }
+function traceInto() { showModal('Debug', '<div style="text-align:center">Trace into: line ' + cursorPos.textContent + '</div>'); }
+function programReset() { closeOutput(); showModal('Information', '<div style="text-align:center">Program reset.</div>'); }
+function toggleBreakpoint() { showModal('Debug', '<div style="text-align:center">Breakpoint toggled at line ' + cursorPos.textContent + '</div>'); }
+
+function showAbout() {
+  showModal('About', `<div style="text-align:center;line-height:1.8">
+    <div style="font-weight:bold;font-size:14px">Turbo Pascal</div>
+    <div>Version 7.0</div>
+    <div style="margin-top:8px;color:#000">Copyright (c) 1983, 1992</div>
+    <div>Borland International</div>
+    <div style="margin-top:10px;font-size:12px">— Browser replica —</div>
+  </div>`);
+}
+
+function showHelp() {
+  showModal('Help', `<div style="line-height:1.8">
+<b>Keyboard shortcuts:</b><br>
+F1 — This help<br>F2 — Save file<br>F3 — Open file<br>
+F9 — Make (compile)<br>Alt-F9 — Compile<br>Ctrl-F9 — Run program<br>Alt-X — Exit IDE<br><br>
+<b>Pascal basics:</b><br>
+program Name;<br>begin<br>&nbsp;&nbsp;writeln('text');<br>end.<br><br>
+Try opening HELLO.PAS, FACT.PAS, FIB.PAS, PRIMES.PAS, or GUESS.PAS via File → Open.
+</div>`);
+}
+
+function quitIDE() {
+  showModal('Confirm', '<div style="text-align:center">Exit Turbo Pascal?</div>',
+    `<button class="mbtn" onclick="reallyQuit()"><span class="acc">Y</span>es</button><button class="mbtn" onclick="closeModal()"><span class="acc">N</span>o</button>`);
+}
+function reallyQuit() {
+  document.getElementById('tp').innerHTML = '<div style="background:#000;color:#aaa;padding:20px;font-family:monospace;height:100%">C:\\TP\\BIN&gt;_</div>';
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('modal-overlay').className === 'show') {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter') { const okBtn = document.querySelector('#modal-footer .mbtn'); if (okBtn) okBtn.click(); }
+    return;
+  }
+  if (e.key === 'F1') { e.preventDefault(); showHelp(); }
+  else if (e.key === 'F2') { e.preventDefault(); saveFile(); }
+  else if (e.key === 'F3') { e.preventDefault(); showOpen(); }
+  else if (e.key === 'F9' && !e.altKey && !e.ctrlKey) { e.preventDefault(); makeProgram(); }
+  else if (e.key === 'F9' && e.altKey) { e.preventDefault(); compileProgram(); }
+  else if (e.key === 'F9' && e.ctrlKey) { e.preventDefault(); runProgram(); }
+  else if (e.key === 'x' && e.altKey) { e.preventDefault(); quitIDE(); }
+});
+
+updateAll();
+editor.focus();
+window.addEventListener('resize', syncSizes);
+</script>
